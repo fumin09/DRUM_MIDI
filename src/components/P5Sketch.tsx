@@ -19,36 +19,35 @@ import {
 import { calcX, calcY, drawDrumShape, easeOutQuadSimple } from "../utils/p5Helpers";
 import { parseMidiFile } from "../utils/midiParser";
 
-const P5Sketch: React.FC = () => {
+// ✅ props 型定義
+type P5SketchProps = {
+  height?: number;
+  backgroundColor?: string;
+};
+
+const P5Sketch: React.FC<P5SketchProps> = ({
+  height = 300,
+  backgroundColor = "#000"
+}) => {
   const midiDataRef = useRef<Midi | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [bpm, setBpm] = useState(musicSetting.bpm);
 
-  /** preload: MIDIファイル読み込み */
   const preload = async (p: p5) => {
-    console.log("preload start");
     const response = await fetch(`/${musicSetting.drumMidiFileName}`);
     const arrayBuffer = await response.arrayBuffer();
     const midiData = await parseMidiFile(arrayBuffer);
     midiDataRef.current = midiData;
-    console.log("MIDI解析完了");
   };
 
-  /** Start ボタン */
   const handleStart = async () => {
-    console.log("Start button clicked");
-    if (!midiDataRef.current) {
-      console.log("MIDIデータがまだロードされていません");
-      return;
-    }
+    if (!midiDataRef.current) return;
     await Tone.start();
     parts.forEach((p) => p.dispose());
     midiDataRef.current.tracks.forEach((track) => {
       const synth = new Tone.PolySynth().toDestination();
       const part = new Tone.Part(
-        (time, note) => {
-          synth.triggerAttackRelease(note.name, note.duration, time);
-        },
+        (time, note) => synth.triggerAttackRelease(note.name, note.duration, time),
         track.notes.map((note) => ({
           time: note.time,
           name: note.name,
@@ -63,7 +62,6 @@ const P5Sketch: React.FC = () => {
     progress.lastBeatTimeMs = 0;
   };
 
-  /** Stop ボタン */
   const handleStop = () => {
     parts.forEach((part) => part.stop(0));
     setIsPlaying(false);
@@ -78,19 +76,16 @@ const P5Sketch: React.FC = () => {
     setBpm(Number(e.target.value));
   };
 
-  /** p5.js setup */
   const setup = (p: p5, parent: Element) => {
-    console.log("setup called");
-    p.createCanvas(p.windowWidth, canvasSetting.height).parent(parent);
+    p.createCanvas(parent.clientWidth, height).parent(parent);
     p.rectMode(p.CENTER);
-    p.background(canvasSetting.backgroundColor);
+    p.background(backgroundColor);
     drawFrames(p);
   };
 
-  /** p5.js draw */
   const draw = (p: p5) => {
     if (!isPlaying) return;
-    p.background(canvasSetting.backgroundColor);
+    p.background(backgroundColor);
     drawFrames(p);
     drawStaticShapes(p);
 
@@ -103,29 +98,27 @@ const P5Sketch: React.FC = () => {
       }
       progress.lastBeatTimeMs = now;
       progress.beatCount++;
+
       const rowVal = ((progress.measureCount - 1) % frameSetting.rowCount) + 1;
       const colVal = progress.beatCount;
+
       if (rowVal === 2 && colVal === musicSetting.beatCount) {
         effects.splice(0, effects.length);
         staticShapes.splice(0, staticShapes.length);
       }
+
       const x = calcX(colVal, p.width);
       const y = calcY(rowVal);
       const measureMap = midi.drumMap.get(progress.measureCount);
       const drumType = measureMap?.get(colVal);
       if (drumType !== undefined) {
-        effects.push({
-          startTime: now,
-          x,
-          y,
-          drumType,
-        } as EffectEvent);
+        effects.push({ startTime: now, x, y, drumType } as EffectEvent);
       }
     }
+
     updateAndDrawEffects(p, now);
   };
 
-  /** 枠描画 */
   const drawFrames = (p: p5) => {
     const { columnCount, rowCount, padding, size, color } = frameSetting;
     p.noFill();
