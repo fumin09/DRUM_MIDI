@@ -25,6 +25,9 @@ export const parseMidiFile = async (arrayBuffer: ArrayBuffer): Promise<Midi> => 
       midi.drumMap.set(measureCount, new Map());
     }
     const measureMap = midi.drumMap.get(measureCount)!;
+      // 🪵 MIDIノートをビジュアライズに割り当てる際のログ
+      console.log(`🧩 note.midi = ${note.midi}, measure = ${measureCount}, beat = ${beatCount}`);
+
 
     // MIDI ノート番号に応じたドラム種別の登録
     switch (note.midi) {
@@ -44,8 +47,14 @@ export const parseMidiFile = async (arrayBuffer: ArrayBuffer): Promise<Midi> => 
           measureMap.set(beatCount, beatType.Kick);
         }
         break;
+        default:
+          console.warn("⚠ 未対応のMIDIノート:", note.midi);
+
+        
     }
   });
+
+  
 
   return midiData;
 };

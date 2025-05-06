@@ -1,6 +1,6 @@
 // src/utils/p5Helpers.ts
 import p5 from "p5";
-import { canvasSetting, frameSetting, beatType, drumColors } from "../constants/settings";
+import { drumSetting, frameSetting, beatType, drumColors } from "../constants/settings";
 
 /** Ease-Out Quadratic 補間 */
 export const easeOutQuad = (t: number, b: number, c: number, d: number): number => {
@@ -17,7 +17,7 @@ export const calcX = (colVal: number, canvasWidth: number): number => {
 
 export const calcY = (rowVal: number): number => {
   const { rowCount, padding, size } = frameSetting;
-  const startY = (canvasSetting.height - rowCount * size - (rowCount - 1) * padding) / 2;
+  const startY = (drumSetting.height - rowCount * size - (rowCount - 1) * padding) / 2;
   return startY + (rowVal - 1) * (size + padding) + size / 2;
 };
 
